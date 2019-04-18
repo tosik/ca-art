@@ -2,6 +2,8 @@
 #include <SDL2pp/SDL2pp.hh>
 
 #include "../externals/BitboardCA-embedded/include/GenerationOuterTotalisticCA.h"
+#include "inner_ca_a.h"
+#include "inner_ca_b.h"
 
 const std::string title = "Cellular automata art";
 constexpr int pixel_size = 2;
@@ -9,20 +11,6 @@ constexpr int board_width = 400;
 constexpr int board_height = 400;
 
 namespace BCA = BitboardCA;
-
-class InnerCA_A : public BCA::OuterTotalisticCA {
-public:
-  InnerCA_A(std::size_t size_x, std::size_t size_y)
-      : BCA::OuterTotalisticCA(size_x, size_y) {}
-
-protected:
-  BCA::Bitboard Rule(BCA::Bitboard board, BCA::Bitboard s0, BCA::Bitboard s1,
-                     BCA::Bitboard s2, BCA::Bitboard s3, BCA::Bitboard s4,
-                     BCA::Bitboard s5, BCA::Bitboard s6, BCA::Bitboard s7,
-                     BCA::Bitboard s8) {
-    return (board & (s3 | s4 | s5 | s6)) | (~board & (s2 | s5));
-  }
-};
 
 int main(int argc, char *argv[]) {
   SDL2pp::SDL sdl(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER |
@@ -32,47 +20,58 @@ int main(int argc, char *argv[]) {
   SDL2pp::Renderer renderer(
       window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-  BCA::GenerationOuterTotalisticCA ca(board_width, board_height, 4);
-  InnerCA_A inner_ca_a(ca.GetSizeX(), ca.GetSizeY());
-  ca.SetInnerCAInstance(&inner_ca_a);
-  for (int y = 0; y < board_height; y++) {
-    for (int x = 0; x < board_width; x++) {
-      ca.SetCellState(x, y, rand() % 4);
-    }
-  }
+  int start_mode = 1;
+  // int start_mode = 17;
+  for (int mode = start_mode; mode < 23; mode++) {
 
-  while (true) {
-    SDL_Event event;
-    SDL_PollEvent(&event);
-    if (event.type == SDL_QUIT)
-      break;
-    renderer.SetDrawColor(0, 0, 0, 255);
-    renderer.Clear();
+    BCA::GenerationOuterTotalisticCA ca_a(board_width, board_height, 4);
+    InnerCA_A inner_ca_a(mode, ca_a.GetSizeX(), ca_a.GetSizeY());
+    ca_a.SetInnerCAInstance(&inner_ca_a);
     for (int y = 0; y < board_height; y++) {
       for (int x = 0; x < board_width; x++) {
-        auto state = ca.GetCellState(x, y);
-        switch (state) {
-        case 0:
-          renderer.SetDrawColor(255, 255, 255, 255);
-          break;
-        case 1:
-          renderer.SetDrawColor(255, 0, 0, 255);
-          break;
-        case 2:
-          renderer.SetDrawColor(255, 127, 0, 255);
-          break;
-        case 3:
-          renderer.SetDrawColor(255, 127, 127, 255);
-          break;
-        }
-        renderer.FillRect(x * pixel_size, y * pixel_size,
-                          x * pixel_size + pixel_size - 1,
-                          y * pixel_size + pixel_size - 1);
+        ca_a.SetCellState(x, y, rand() % 4);
       }
     }
-    renderer.Present();
 
-    ca.Step();
+    BCA::GenerationOuterTotalisticCA ca_b(board_width, board_height, 4);
+    InnerCA_B inner_ca_b(mode, ca_b.GetSizeX(), ca_b.GetSizeY());
+    ca_b.SetInnerCAInstance(&inner_ca_b);
+    for (int y = 0; y < board_height; y++) {
+      for (int x = 0; x < board_width; x++) {
+        ca_b.SetCellState(x, y, rand() % 4);
+      }
+    }
+
+    for (int i = 0; i < 500; i++) {
+      SDL_Event event;
+      SDL_PollEvent(&event);
+      if (event.type == SDL_QUIT)
+        return 0;
+      renderer.SetDrawColor(0, 0, 0, 255);
+      renderer.Clear();
+      for (int y = 0; y < board_height; y++) {
+        for (int x = 0; x < board_width; x++) {
+          {
+            auto state_a = ca_a.GetCellState(x, y);
+            auto state_b = ca_b.GetCellState(x, y);
+            // auto r = ((state_a * 7 + state_b * 13) * 19) % 255;
+            // auto g = ((state_a * 13 + state_b * 7) * 23) % 255;
+            // auto b = ((state_a * 3 + state_b * 5) * 7) % 255;
+            auto r = ((state_a + state_b) * 67) % 255;
+            auto g = ((state_a + state_b) * 317) % 255;
+            auto b = ((state_a + state_b) * 299) % 255;
+            renderer.SetDrawColor(r, g, b, 255);
+            renderer.FillRect(x * pixel_size, y * pixel_size,
+                              x * pixel_size + pixel_size - 1,
+                              y * pixel_size + pixel_size - 1);
+          }
+        }
+      }
+      renderer.Present();
+
+      ca_a.Step();
+      ca_b.Step();
+    }
   }
 
   return 0;
