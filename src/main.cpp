@@ -6,9 +6,9 @@
 #include "inner_ca_b.h"
 
 const std::string title = "Cellular automata art";
-constexpr int pixel_size = 2;
-constexpr int board_width = 400;
-constexpr int board_height = 400;
+constexpr int pixel_size = 6;
+constexpr int board_width = 64;
+constexpr int board_height = 64;
 
 namespace BCA = BitboardCA;
 
