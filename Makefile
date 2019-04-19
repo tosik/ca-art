@@ -1,5 +1,5 @@
 all: build/
-	(cd build && cmake .. && make && make build-package)
+	(cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make && make build-package)
 
 build/:
 	mkdir -p build
