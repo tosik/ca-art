@@ -47,6 +47,13 @@ int main(int argc, char *argv[]) {
       SDL_PollEvent(&event);
       if (event.type == SDL_QUIT)
         return 0;
+      if (event.type == SDL_KEYDOWN) {
+        if (event.key.keysym.sym == SDLK_ESCAPE)
+          return 0;
+        if (event.key.keysym.sym == SDLK_n)
+          break;
+      }
+
       renderer.SetDrawColor(0, 0, 0, 255);
       renderer.Clear();
       for (int y = 0; y < board_height; y++) {
